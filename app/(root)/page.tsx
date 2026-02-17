@@ -1,9 +1,9 @@
 import React from 'react'
-import { Button } from "../components/ui/button";
+import { Button } from "../../components/ui/button";
 
 const Page = () => {
     return (
-        <div className="flex justify-center items-center h-screen">
+        <div className="flex home-wrapper min-h-screen">
             {/* Use the capital 'B' component you imported */}
             <Button variant="default">
                 Click me
