@@ -12,7 +12,7 @@ const Header = () => {
                 {/* 2. Capitalized Link */}
                 <Link href="/">
                     <Image
-                        src="/public/assets/icons/logo.svg" // Added the extra /public/
+                        src="/assets/icons/logo.svg"
                         alt="logo"
                         width={140}
                         height={32}
