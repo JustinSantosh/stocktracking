@@ -8,14 +8,7 @@ const useTradingViewWidget = (scriptUrl: string, config: Record<string, unknown>
         const container = containerRef.current;
         if (!container) return;
         if (container.dataset.loaded) return;
-
-        const widget = document.createElement("div");
-        widget.className = "tradingview-widget-container__widget";
-        widget.style.width = "100%";
-        widget.style.height = `${height}px`;
-
-        container.innerHTML = "";
-        container.appendChild(widget);
+        container.innerHTML = `<div class="tradingview-widget-container__widget" style="width: 100%; height: ${height}px;"></div>`;
 
         const script = document.createElement("script");
         script.src = scriptUrl;

@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from "react";
 import {useForm} from "react-hook-form";
 import {Button} from "@/components/ui/button";
 import InputField from "@/components/forms/InputField";
@@ -10,9 +9,9 @@ import {CountrySelectField} from "@/components/forms/CountrySelectField";
 import FooterLink from "@/components/forms/FooterLink";
 import {signUpWithEmail} from "@/lib/actions/auth.actions";
 import {useRouter} from "next/navigation";
+import {toast} from "sonner";
 
 const SignUp = () => {
-    const [submitError, setSubmitError] = useState<string | null>(null);
     const router = useRouter()
     const {
         register,
@@ -34,12 +33,13 @@ const SignUp = () => {
 
     const onSubmit = async (data: SignUpFormData) => {
         try {
-            setSubmitError(null);
             const result = await signUpWithEmail(data);
             if(result.success) router.push('/');
         } catch (e) {
             console.error(e);
-            setSubmitError(e instanceof Error ? e.message : 'Failed to create an account.');
+            toast.error('Sign up failed', {
+                description: e instanceof Error ? e.message : 'Failed to create an account.'
+            })
         }
     }
 
@@ -48,7 +48,6 @@ const SignUp = () => {
             <h1 className="form-title">Sign Up & Personalize</h1>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                {submitError && <p className="text-sm text-red-500">{submitError}</p>}
                 <InputField
                     name="fullName"
                     label="Full Name"

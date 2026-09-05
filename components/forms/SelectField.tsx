@@ -1,4 +1,4 @@
-import {Label} from "@/components/ui/Label";
+import {Label} from "@/components/ui/label";
 import {Controller} from "react-hook-form";
 import {
     Select,

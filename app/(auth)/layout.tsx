@@ -1,10 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
-import { auth } from "@/lib/auth";
+import {getAuth} from "@/lib/better-auth/auth";
 import {headers} from "next/headers";
 import {redirect} from "next/navigation";
 
+export const dynamic = 'force-dynamic';
+
 const Layout = async ({ children }: { children : React.ReactNode }) => {
+    const auth = await getAuth();
     const session = await auth.api.getSession({ headers: await headers() })
 
     if(session?.user) redirect('/')
@@ -36,7 +39,8 @@ const Layout = async ({ children }: { children : React.ReactNode }) => {
                         </div>
                     </div>
                 </div>
-                <div className="flex relative">
+
+                <div className="flex-1 relative">
                     <Image src="/assets/images/dashboard.png" alt="Dashboard Preview" width={1440} height={1150} className="auth-dashboard-preview absolute top-0" />
                 </div>
             </section>
