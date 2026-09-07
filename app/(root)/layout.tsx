@@ -6,8 +6,13 @@ import {redirect} from "next/navigation";
 export const dynamic = 'force-dynamic';
 
 const Layout = async ({ children }: { children : React.ReactNode }) => {
-    const auth = await getAuth();
-    const session = await auth.api.getSession({ headers: await headers() });
+    const requestHeaders = await headers();
+    const session = await getAuth()
+        .then((auth) => auth.api.getSession({ headers: requestHeaders }))
+        .catch((error) => {
+            console.error('Auth session lookup failed:', error);
+            return null;
+        });
 
     if(!session?.user) redirect('/sign-in');
 

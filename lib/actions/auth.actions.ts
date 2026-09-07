@@ -19,7 +19,21 @@ export const signUpWithEmail = async ({ email, password, fullName, country, inve
         return { success: true, data: response }
     } catch (e) {
         console.log('Sign up failed', e)
-        return { success: false, error: 'Sign up failed' }
+        return { success: false, error: 'Could not reach the authentication database. Check MongoDB Atlas Network Access.' }
+    }
+}
+
+export const sendSignUpEvent = async ({ email, fullName, country, investmentGoals, riskTolerance, preferredIndustry }: Omit<SignUpFormData, 'password'>) => {
+    try {
+        await inngest.send({
+            name: 'app/user.created',
+            data: { email, name: fullName, country, investmentGoals, riskTolerance, preferredIndustry }
+        })
+
+        return { success: true }
+    } catch (e) {
+        console.log('Sign up event failed', e)
+        return { success: false, error: 'Account created, but the welcome email workflow could not be queued.' }
     }
 }
 
@@ -31,7 +45,7 @@ export const signInWithEmail = async ({ email, password }: SignInFormData) => {
         return { success: true, data: response }
     } catch (e) {
         console.log('Sign in failed', e)
-        return { success: false, error: 'Sign in failed' }
+        return { success: false, error: 'Could not reach the authentication database. Check MongoDB Atlas Network Access.' }
     }
 }
 

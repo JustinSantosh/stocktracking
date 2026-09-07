@@ -1,7 +1,7 @@
 export const NAV_ITEMS = [
     { href: '/', label: 'Dashboard' },
     { href: '/search', label: 'Search' },
-    // { href: '/watchlist', label: 'Watchlist' },
+    { href: '/watchlist', label: 'Watchlist' },
 ];
 
 // Sign-up form select options
@@ -170,8 +170,22 @@ export const MARKET_DATA_WIDGET_CONFIG = {
     ],
 };
 
+export const getTradingViewSymbol = (symbol: string) => {
+    const upperSymbol = decodeURIComponent(symbol).toUpperCase();
+
+    if (upperSymbol.endsWith('.NS') || upperSymbol.endsWith('.NSE')) {
+        return `NSE:${upperSymbol.replace(/\.(NS|NSE)$/, '')}`;
+    }
+
+    if (upperSymbol.endsWith('.BO') || upperSymbol.endsWith('.BSE')) {
+        return `BSE:${upperSymbol.replace(/\.(BO|BSE)$/, '')}`;
+    }
+
+    return upperSymbol;
+};
+
 export const SYMBOL_INFO_WIDGET_CONFIG = (symbol: string) => ({
-    symbol: symbol.toUpperCase(),
+    symbol: getTradingViewSymbol(symbol),
     colorTheme: 'dark',
     isTransparent: true,
     locale: 'en',
@@ -192,7 +206,7 @@ export const CANDLE_CHART_WIDGET_CONFIG = (symbol: string) => ({
     locale: 'en',
     save_image: false,
     style: 1,
-    symbol: symbol.toUpperCase(),
+    symbol: getTradingViewSymbol(symbol),
     theme: 'dark',
     timezone: 'Etc/UTC',
     backgroundColor: '#141414',
@@ -218,7 +232,7 @@ export const BASELINE_WIDGET_CONFIG = (symbol: string) => ({
     locale: 'en',
     save_image: false,
     style: 10,
-    symbol: symbol.toUpperCase(),
+    symbol: getTradingViewSymbol(symbol),
     theme: 'dark',
     timezone: 'Etc/UTC',
     backgroundColor: '#141414',
@@ -232,7 +246,7 @@ export const BASELINE_WIDGET_CONFIG = (symbol: string) => ({
 });
 
 export const TECHNICAL_ANALYSIS_WIDGET_CONFIG = (symbol: string) => ({
-    symbol: symbol.toUpperCase(),
+    symbol: getTradingViewSymbol(symbol),
     colorTheme: 'dark',
     isTransparent: 'true',
     locale: 'en',
@@ -243,7 +257,7 @@ export const TECHNICAL_ANALYSIS_WIDGET_CONFIG = (symbol: string) => ({
 });
 
 export const COMPANY_PROFILE_WIDGET_CONFIG = (symbol: string) => ({
-    symbol: symbol.toUpperCase(),
+    symbol: getTradingViewSymbol(symbol),
     colorTheme: 'dark',
     isTransparent: 'true',
     locale: 'en',
@@ -252,7 +266,7 @@ export const COMPANY_PROFILE_WIDGET_CONFIG = (symbol: string) => ({
 });
 
 export const COMPANY_FINANCIALS_WIDGET_CONFIG = (symbol: string) => ({
-    symbol: symbol.toUpperCase(),
+    symbol: getTradingViewSymbol(symbol),
     colorTheme: 'dark',
     isTransparent: 'true',
     locale: 'en',

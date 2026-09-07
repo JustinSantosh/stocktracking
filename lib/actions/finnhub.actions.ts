@@ -1,21 +1,154 @@
 'use server';
 
-import { getDateRange, validateArticle, formatArticle } from '@/lib/utils';
+import {
+  formatArticle,
+  formatChangePercent,
+  formatMarketCapValue,
+  formatPrice,
+  getDateRange,
+  validateArticle,
+} from '@/lib/utils';
 import { POPULAR_STOCK_SYMBOLS } from '@/lib/constants';
-import { cache } from 'react';
+import { getCurrentWatchlistSymbols } from '@/lib/actions/watchlist.actions';
 
 const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
 const NEXT_PUBLIC_FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY ?? '';
+const ALPHA_VANTAGE_BASE_URL = process.env.ALPHA_VANTAGE_BASE_URL ?? 'https://www.alphavantage.co/query';
+const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY ?? '';
 
 type FinnhubProfile = {
   name?: string;
   ticker?: string;
   exchange?: string;
+  marketCapitalization?: number;
+};
+
+type FinnhubQuote = {
+  c?: number;
+  dp?: number;
+};
+
+type FinnhubMetrics = {
+  metric?: {
+    peBasicExclExtraTTM?: number;
+    peTTM?: number;
+  };
 };
 
 type FinnhubSearchResultWithExchange = FinnhubSearchResult & {
   exchange?: string;
 };
+
+const INDIAN_EXCHANGES = new Set(['BSE', 'NSE']);
+
+function isIndianMarketStock(stock: StockWithWatchlistStatus) {
+  const exchange = stock.exchange.toUpperCase();
+  const symbol = stock.symbol.toUpperCase();
+
+  return (
+    INDIAN_EXCHANGES.has(exchange) ||
+    symbol.endsWith('.BSE') ||
+    symbol.endsWith('.NSE') ||
+    symbol.endsWith('.NS') ||
+    symbol.endsWith('.BO')
+  );
+}
+
+function normalizeAlphaVantageExchange(symbol: string, region: string) {
+  const upperSymbol = symbol.toUpperCase();
+  const upperRegion = region.toUpperCase();
+
+  if (upperSymbol.endsWith('.BSE') || upperSymbol.endsWith('.BO')) return 'BSE';
+  if (upperSymbol.endsWith('.NSE') || upperSymbol.endsWith('.NS')) return 'NSE';
+  if (upperRegion.includes('INDIA')) return 'India';
+
+  return region || 'Global';
+}
+
+function toAlphaVantageTicker(symbol: string) {
+  const upperSymbol = symbol.toUpperCase();
+
+  if (upperSymbol.endsWith('.NS') || upperSymbol.endsWith('.NSE')) {
+    return `NSE:${upperSymbol.replace(/\.(NS|NSE)$/, '')}`;
+  }
+
+  if (upperSymbol.endsWith('.BO') || upperSymbol.endsWith('.BSE')) {
+    return `BSE:${upperSymbol.replace(/\.(BO|BSE)$/, '')}`;
+  }
+
+  return upperSymbol;
+}
+
+function parseAlphaVantageTime(value?: string) {
+  if (!value || value.length < 8) return Math.floor(Date.now() / 1000);
+
+  const year = value.slice(0, 4);
+  const month = value.slice(4, 6);
+  const day = value.slice(6, 8);
+  const hour = value.slice(9, 11) || '00';
+  const minute = value.slice(11, 13) || '00';
+  const second = value.slice(13, 15) || '00';
+
+  return Math.floor(new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}Z`).getTime() / 1000);
+}
+
+async function getAlphaVantageNews(symbol: string): Promise<RawNewsArticle[]> {
+  if (!ALPHA_VANTAGE_API_KEY) return [];
+
+  try {
+    const ticker = toAlphaVantageTicker(symbol);
+    const url = `${ALPHA_VANTAGE_BASE_URL}?function=NEWS_SENTIMENT&tickers=${encodeURIComponent(ticker)}&limit=6&apikey=${ALPHA_VANTAGE_API_KEY}`;
+    const data = await fetchJSON<AlphaVantageNewsResponse>(url, 900);
+
+    if (data.Note || data.Information || data.Error) {
+      console.warn('Alpha Vantage news notice:', data.Note || data.Information || data.Error);
+      return [];
+    }
+
+    return (data.feed || []).map((article, index) => ({
+      id: parseAlphaVantageTime(article.time_published) + index,
+      headline: article.title,
+      summary: article.summary,
+      source: article.source,
+      url: article.url,
+      datetime: parseAlphaVantageTime(article.time_published),
+      image: article.banner_image,
+      category: article.overall_sentiment_label || 'company',
+      related: symbol,
+    }));
+  } catch (err) {
+    console.warn('Alpha Vantage news fallback failed:', symbol, err);
+    return [];
+  }
+}
+
+async function searchAlphaVantageStocks(query: string): Promise<StockWithWatchlistStatus[]> {
+  if (!ALPHA_VANTAGE_API_KEY) return [];
+
+  try {
+    const url = `${ALPHA_VANTAGE_BASE_URL}?function=SYMBOL_SEARCH&keywords=${encodeURIComponent(query)}&apikey=${ALPHA_VANTAGE_API_KEY}`;
+    const data = await fetchJSON<AlphaVantageSearchResponse>(url, 3600);
+    const matches = data.bestMatches || [];
+
+    if (data.Note || data.Information || data.Error) {
+      console.error('Alpha Vantage search notice:', data.Note || data.Information || data.Error);
+    }
+
+    return matches
+      .map((match) => ({
+        symbol: match['1. symbol'].toUpperCase(),
+        name: match['2. name'],
+        exchange: normalizeAlphaVantageExchange(match['1. symbol'], match['4. region']),
+        type: match['3. type'] || 'Stock',
+        isInWatchlist: false,
+      }))
+      .filter(isIndianMarketStock)
+      .slice(0, 15);
+  } catch (err) {
+    console.error('Alpha Vantage fallback search failed:', err);
+    return [];
+  }
+}
 
 async function fetchJSON<T>(url: string, revalidateSeconds?: number): Promise<T> {
   const options: RequestInit & { next?: { revalidate?: number } } = revalidateSeconds
@@ -31,6 +164,63 @@ async function fetchJSON<T>(url: string, revalidateSeconds?: number): Promise<T>
 }
 
 export { fetchJSON };
+
+export async function getWatchlistMarketData(
+  watchlist: StockWithData[]
+): Promise<StockWithData[]> {
+  const token = process.env.FINNHUB_API_KEY ?? NEXT_PUBLIC_FINNHUB_API_KEY;
+  if (!token || watchlist.length === 0) return watchlist;
+
+  return Promise.all(
+    watchlist.map(async (item) => {
+      const symbol = item.symbol.toUpperCase();
+
+      try {
+        const [quoteResult, profileResult, metricsResult] = await Promise.allSettled([
+          fetchJSON<FinnhubQuote>(
+            `${FINNHUB_BASE_URL}/quote?symbol=${encodeURIComponent(symbol)}&token=${token}`,
+            60
+          ),
+          fetchJSON<FinnhubProfile>(
+            `${FINNHUB_BASE_URL}/stock/profile2?symbol=${encodeURIComponent(symbol)}&token=${token}`,
+            3600
+          ),
+          fetchJSON<FinnhubMetrics>(
+            `${FINNHUB_BASE_URL}/stock/metric?symbol=${encodeURIComponent(symbol)}&metric=all&token=${token}`,
+            3600
+          ),
+        ]);
+
+        const quote = quoteResult.status === 'fulfilled' ? quoteResult.value : {};
+        const profile = profileResult.status === 'fulfilled' ? profileResult.value : {};
+        const metrics = metricsResult.status === 'fulfilled' ? metricsResult.value : {};
+        const currentPrice = Number(quote.c) || undefined;
+        const changePercent = Number.isFinite(quote.dp) ? quote.dp : undefined;
+        const marketCapMillions = Number(profile.marketCapitalization);
+        const peRatio = metrics.metric?.peBasicExclExtraTTM ?? metrics.metric?.peTTM;
+
+        return {
+          ...item,
+          company: profile.name || item.company,
+          currentPrice,
+          changePercent,
+          priceFormatted: currentPrice ? formatPrice(currentPrice) : '—',
+          changeFormatted:
+            changePercent === undefined ? '—' : formatChangePercent(changePercent) || '0.00%',
+          marketCap:
+            Number.isFinite(marketCapMillions) && marketCapMillions > 0
+              ? formatMarketCapValue(marketCapMillions * 1_000_000)
+              : '—',
+          peRatio:
+            Number.isFinite(peRatio) && Number(peRatio) > 0 ? Number(peRatio).toFixed(1) : '—',
+        };
+      } catch (error) {
+        console.warn('Watchlist market data unavailable for', symbol, error);
+        return item;
+      }
+    })
+  );
+}
 
 export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> {
   try {
@@ -54,10 +244,11 @@ export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> 
           try {
             const url = `${FINNHUB_BASE_URL}/company-news?symbol=${encodeURIComponent(sym)}&from=${range.from}&to=${range.to}&token=${token}`;
             const articles = await fetchJSON<RawNewsArticle[]>(url, 300);
-            perSymbolArticles[sym] = (articles || []).filter(validateArticle);
+            const validArticles = (articles || []).filter(validateArticle);
+            perSymbolArticles[sym] = validArticles.length > 0 ? validArticles : await getAlphaVantageNews(sym);
           } catch (e) {
-            console.error('Error fetching company news for', sym, e);
-            perSymbolArticles[sym] = [];
+            console.warn('Finnhub company news unavailable, using fallback for', sym, e);
+            perSymbolArticles[sym] = await getAlphaVantageNews(sym);
           }
         })
       );
@@ -108,8 +299,9 @@ export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> 
   }
 }
 
-export const searchStocks = cache(async (query?: string): Promise<StockWithWatchlistStatus[]> => {
+export const searchStocks = async (query?: string): Promise<StockWithWatchlistStatus[]> => {
   try {
+    const watchlistSymbols = new Set(await getCurrentWatchlistSymbols());
     const token = process.env.FINNHUB_API_KEY ?? NEXT_PUBLIC_FINNHUB_API_KEY;
     if (!token) {
       // If no token, log and return empty to avoid throwing per requirements
@@ -173,16 +365,37 @@ export const searchStocks = cache(async (query?: string): Promise<StockWithWatch
           name,
           exchange,
           type,
-          isInWatchlist: false,
+        isInWatchlist: false,
         };
         return item;
       })
       .slice(0, 15);
 
-    return mapped;
+    const mappedWithWatchlist = mapped.map((stock) => ({
+      ...stock,
+      isInWatchlist: watchlistSymbols.has(stock.symbol.toUpperCase()),
+    }));
+
+    if (trimmed) {
+      const indianResults = mappedWithWatchlist.filter(isIndianMarketStock);
+      if (indianResults.length > 0) return indianResults;
+
+      if (!indianResults.length) {
+        const alphaVantageResults = await searchAlphaVantageStocks(trimmed);
+        if (alphaVantageResults.length > 0) {
+          return alphaVantageResults.map((stock) => ({
+            ...stock,
+            isInWatchlist: watchlistSymbols.has(stock.symbol.toUpperCase()),
+          }));
+        }
+      }
+    }
+
+    return mappedWithWatchlist;
   } catch (err) {
     console.error('Error in stock search:', err);
+    if (query?.trim()) return searchAlphaVantageStocks(query.trim());
     return [];
   }
-});
+};
 

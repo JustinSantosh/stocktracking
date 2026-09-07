@@ -155,7 +155,7 @@
     @apply w-full gap-8 grid-cols-1 md:grid-cols-2 xl:grid-cols-3;
   }
   .header {
-    @apply z-50 w-full h-[70px] bg-gray-800;
+    @apply z-50 w-full bg-gray-800 border-b border-gray-700;
   }
   .header-wrapper {
     @apply flex justify-between items-center px-6 py-4 text-gray-500;
@@ -250,6 +250,44 @@
   .nav-list {
     @apply flex flex-col sm:flex-row p-2 gap-3 sm:gap-10 font-medium;
   }
+  .news-bar {
+    @apply overflow-hidden border-t border-gray-700 bg-gray-900/95;
+  }
+  .news-bar-wrapper {
+    @apply flex h-11 items-center gap-4 overflow-hidden text-sm text-gray-400;
+  }
+  .news-bar-label {
+    @apply hidden shrink-0 items-center gap-2 font-semibold text-yellow-500 md:flex;
+  }
+  .news-bar-icon {
+    @apply h-4 w-4 shrink-0 text-yellow-500;
+  }
+  .news-bar-empty {
+    @apply truncate text-gray-500;
+  }
+  .news-bar-viewport {
+    @apply min-w-0 flex-1 overflow-hidden;
+    mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
+  }
+  .news-bar-track {
+    @apply flex w-max;
+    animation: news-ticker 42s linear infinite;
+  }
+  .news-bar-track:hover {
+    animation-play-state: paused;
+  }
+  .news-bar-group {
+    @apply flex shrink-0 items-center gap-8 pr-8;
+  }
+  .news-bar-link {
+    @apply flex max-w-[520px] shrink-0 items-center gap-2 whitespace-nowrap text-gray-400 transition-colors hover:text-gray-100;
+  }
+  .news-bar-symbol {
+    @apply shrink-0 text-xs font-semibold uppercase text-teal-400;
+  }
+  .news-bar-headline {
+    @apply truncate text-gray-300;
+  }
   .stock-details-container {
     @apply w-full grid-cols-1 gap-6 xl:grid-cols-3 space-y-6 sm:space-y-8;
   }
@@ -299,7 +337,31 @@
     @apply h-4 w-4;
   }
   .watchlist-title {
-    @apply text-xl md:text-2xl font-bold text-gray-100;
+    @apply mt-1 text-2xl font-bold tracking-tight text-gray-100 md:text-3xl;
+  }
+  .watchlist-subtitle {
+    @apply mt-1 text-sm text-gray-500;
+  }
+  .watchlist-page {
+    @apply flex flex-col gap-8;
+  }
+  .watchlist-page-header {
+    @apply flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between;
+  }
+  .watchlist-list {
+    @apply overflow-hidden rounded-lg border border-gray-600 bg-gray-800;
+  }
+  .watchlist-row {
+    @apply flex items-center justify-between gap-4 border-b border-gray-600 p-4 last:border-b-0;
+  }
+  .watchlist-row-main {
+    @apply min-w-0 flex-1 hover:text-yellow-500;
+  }
+  .watchlist-row-symbol {
+    @apply text-base font-semibold text-gray-100;
+  }
+  .watchlist-row-company {
+    @apply truncate text-sm text-gray-500;
   }
   .watchlist-table {
     @apply !relative overflow-hidden !w-full bg-gray-800 border !border-gray-600 !rounded-lg;
@@ -386,6 +448,364 @@
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+@keyframes news-ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .news-bar-track {
+    animation: none;
+  }
+}
+
+/* Watchlist dashboard */
+.watchlist-eyebrow {
+  color: #e8ba40;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.watchlist-dashboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 21rem;
+  gap: 1.25rem;
+  align-items: stretch;
+}
+
+.watchlist-table-shell,
+.watchlist-alert-panel,
+.watchlist-news-card,
+.watchlist-news-empty {
+  border: 1px solid #30333a;
+  background: #141414;
+  border-radius: 0.75rem;
+}
+
+.watchlist-table-shell {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.watchlist-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.watchlist-data-table {
+  width: 100%;
+  min-width: 780px;
+  border-collapse: collapse;
+  color: #e5e7eb;
+  font-size: 0.875rem;
+}
+
+.watchlist-data-table th {
+  height: 3.25rem;
+  padding: 0 1rem;
+  background: #212328;
+  color: #9095a1;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.045em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.watchlist-data-table td {
+  height: 4.15rem;
+  padding: 0 1rem;
+  border-top: 1px solid #282a30;
+  font-weight: 550;
+  white-space: nowrap;
+}
+
+.watchlist-data-table tbody tr {
+  transition: background-color 160ms ease;
+}
+
+.watchlist-data-table tbody tr:hover {
+  background: #1b1c20;
+}
+
+.watchlist-company-cell {
+  display: flex;
+  min-width: 12rem;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.watchlist-star-cell {
+  display: grid;
+  width: 1.9rem;
+  height: 1.9rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  background: #2b2c30;
+}
+
+.watchlist-star-cell .watchlist-icon-btn {
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+}
+
+.watchlist-company-link {
+  max-width: 13rem;
+  overflow: hidden;
+  color: #f3f4f6;
+  text-overflow: ellipsis;
+  transition: color 160ms ease;
+}
+
+.watchlist-company-link:hover {
+  color: #fdd458;
+}
+
+.watchlist-symbol-cell {
+  color: #a8adb7;
+  font-family: var(--font-geist-mono), monospace;
+}
+
+.watchlist-change-up { color: #0fedbe; }
+.watchlist-change-down { color: #ff495b; }
+.watchlist-change-neutral { color: #9095a1; }
+
+.watchlist-alert-button,
+.watchlist-create-alert {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border: 1px solid rgb(232 186 64 / 30%);
+  border-radius: 0.4rem;
+  color: #fdd458;
+  font-size: 0.75rem;
+  font-weight: 650;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.watchlist-alert-button {
+  padding: 0.42rem 0.65rem;
+}
+
+.watchlist-alert-button:hover,
+.watchlist-create-alert:hover {
+  border-color: rgb(253 212 88 / 65%);
+  background: rgb(253 212 88 / 8%);
+}
+
+.watchlist-alert-panel {
+  display: flex;
+  min-height: 28rem;
+  max-height: 38rem;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.watchlist-alert-header,
+.watchlist-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.watchlist-alert-header {
+  padding: 1rem;
+  border-bottom: 1px solid #30333a;
+}
+
+.watchlist-alert-header h2,
+.watchlist-section-heading h2 {
+  margin-top: 0.2rem;
+  color: #f3f4f6;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.watchlist-create-alert {
+  padding: 0.55rem 0.7rem;
+  background: #e8ba40;
+  color: #090909;
+}
+
+.watchlist-create-alert:hover {
+  background: #fdd458;
+}
+
+.watchlist-alert-items {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow-y: auto;
+  padding: 0.75rem;
+}
+
+.watchlist-alert-empty {
+  display: flex;
+  min-height: 20rem;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: #9095a1;
+  text-align: center;
+}
+
+.watchlist-alert-empty-icon {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 0.9rem;
+  place-items: center;
+  border-radius: 999px;
+  background: rgb(253 212 88 / 10%);
+  color: #fdd458;
+}
+
+.watchlist-alert-empty-icon svg { width: 1.3rem; }
+.watchlist-alert-empty h3 { color: #e5e7eb; font-weight: 650; }
+.watchlist-alert-empty p { margin-top: 0.35rem; font-size: 0.82rem; line-height: 1.45; }
+
+.watchlist-alert-card {
+  padding: 0.9rem;
+  border: 1px solid #3b3e46;
+  border-radius: 0.55rem;
+  background: #212328;
+}
+
+.watchlist-alert-card-top,
+.watchlist-alert-current {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.watchlist-alert-card-top > div {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.watchlist-alert-card-top span {
+  overflow: hidden;
+  color: #f3f4f6;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.watchlist-alert-card-top strong { color: #9095a1; font-size: 0.75rem; }
+.watchlist-alert-card-top button { color: #9095a1; }
+.watchlist-alert-card-top button:hover { color: #ff495b; }
+.watchlist-alert-card-top svg { width: 0.95rem; }
+
+.watchlist-alert-current {
+  margin-top: 0.7rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid #383b42;
+  color: #9095a1;
+  font-size: 0.78rem;
+}
+
+.watchlist-alert-current strong { color: #f3f4f6; font-size: 0.9rem; }
+.watchlist-alert-rule { margin-top: 0.55rem; color: #a8adb7; font-size: 0.78rem; }
+.watchlist-alert-rule strong { color: #fdd458; }
+
+.watchlist-alert-dialog {
+  border-color: #3b3e46 !important;
+  background: #141414 !important;
+  color: #f3f4f6;
+}
+
+.watchlist-alert-form { display: grid; gap: 1rem; }
+.watchlist-alert-form label { display: grid; gap: 0.45rem; color: #ccd0d7; font-size: 0.82rem; font-weight: 600; }
+.watchlist-alert-form select,
+.watchlist-alert-form input {
+  height: 2.65rem;
+  border: 1px solid #3b3e46;
+  border-radius: 0.45rem;
+  background: #212328;
+  padding: 0 0.75rem;
+  color: #f3f4f6;
+}
+.watchlist-alert-form > p { color: #707580; font-size: 0.75rem; }
+.watchlist-dialog-submit { background: #e8ba40 !important; color: #080808 !important; }
+
+.watchlist-news-section {
+  display: grid;
+  gap: 1rem;
+  padding-top: 0.25rem;
+}
+
+.watchlist-section-heading > svg { color: #fdd458; }
+
+.watchlist-news-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.watchlist-news-card {
+  display: flex;
+  min-height: 17rem;
+  flex-direction: column;
+  padding: 1rem;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.watchlist-news-card:hover {
+  border-color: rgb(253 212 88 / 45%);
+  transform: translateY(-2px);
+}
+
+.watchlist-news-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #0fedbe;
+}
+
+.watchlist-news-card-top span {
+  padding: 0.25rem 0.45rem;
+  border-radius: 0.25rem;
+  background: rgb(15 237 190 / 10%);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.watchlist-news-card-top svg { width: 1rem; color: #707580; }
+.watchlist-news-card h3 { margin-top: 1rem; color: #f3f4f6; font-size: 0.95rem; font-weight: 650; line-height: 1.4; }
+.watchlist-news-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; color: #707580; font-size: 0.7rem; }
+.watchlist-news-card p { display: -webkit-box; margin-top: 0.75rem; overflow: hidden; color: #9ca0aa; font-size: 0.78rem; line-height: 1.55; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.watchlist-news-read { margin-top: auto; padding-top: 0.9rem; color: #fdd458; font-size: 0.75rem; font-weight: 650; }
+.watchlist-news-empty { padding: 2.5rem; color: #9095a1; text-align: center; }
+
+@media (max-width: 1180px) {
+  .watchlist-dashboard { grid-template-columns: 1fr; }
+  .watchlist-alert-panel { min-height: auto; max-height: none; }
+  .watchlist-alert-empty { min-height: 11rem; }
+  .watchlist-news-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .watchlist-news-grid { grid-template-columns: 1fr; }
+  .watchlist-news-card { min-height: 14rem; }
+  .watchlist-data-table th,
+  .watchlist-data-table td { padding-inline: 0.8rem; }
 }
 
 /* TradingView Advanced Chart Widget Styles */

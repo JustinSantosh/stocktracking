@@ -7,6 +7,7 @@ import {Loader2,  TrendingUp} from "lucide-react";
 import Link from "next/link";
 import {searchStocks} from "@/lib/actions/finnhub.actions";
 import {useDebounce} from "@/hooks/useDebounce";
+import WatchlistButton from "@/components/WatchlistButton";
 
 export default function SearchCommand({ renderAs = 'button', label = 'Add stock', initialStocks }: SearchCommandProps) {
   const [open, setOpen] = useState(false)
@@ -54,6 +55,14 @@ export default function SearchCommand({ renderAs = 'button', label = 'Add stock'
     setStocks(initialStocks);
   }
 
+  const handleWatchlistChange = (symbol: string, isAdded: boolean) => {
+    setStocks((currentStocks) =>
+      currentStocks.map((stock) =>
+        stock.symbol === symbol ? { ...stock, isInWatchlist: isAdded } : stock
+      )
+    );
+  }
+
   return (
     <>
       {renderAs === 'text' ? (
@@ -85,22 +94,30 @@ export default function SearchCommand({ renderAs = 'button', label = 'Add stock'
               </div>
               {displayStocks?.map((stock) => (
                   <li key={stock.symbol} className="search-item">
-                    <Link
-                        href={`/stocks/${stock.symbol}`}
-                        onClick={handleSelectStock}
-                        className="search-item-link"
-                    >
-                      <TrendingUp className="h-4 w-4 text-gray-500" />
-                      <div  className="flex-1">
-                        <div className="search-item-name">
-                          {stock.name}
+                    <div className="search-item-link">
+                      <Link
+                          href={`/stocks/${stock.symbol}`}
+                          onClick={handleSelectStock}
+                          className="flex min-w-0 flex-1 items-center gap-3"
+                      >
+                        <TrendingUp className="h-4 w-4 text-gray-500" />
+                        <div className="min-w-0 flex-1">
+                          <div className="search-item-name truncate">
+                            {stock.name}
+                          </div>
+                          <div className="truncate text-sm text-gray-500">
+                            {stock.symbol} | {stock.exchange } | {stock.type}
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {stock.symbol} | {stock.exchange } | {stock.type}
-                        </div>
-                      </div>
-                    {/*<Star />*/}
-                    </Link>
+                      </Link>
+                      <WatchlistButton
+                        symbol={stock.symbol}
+                        company={stock.name}
+                        isInWatchlist={stock.isInWatchlist}
+                        type="icon"
+                        onWatchlistChange={handleWatchlistChange}
+                      />
+                    </div>
                   </li>
               ))}
             </ul>

@@ -3,6 +3,7 @@ import Image from "next/image";
 import NavItems from "@/components/NavItems";
 import UserDropdown from "@/components/UserDropdown";
 import {searchStocks} from "@/lib/actions/finnhub.actions";
+import MarketNewsBar from "@/components/MarketNewsBar";
 
 const Header = async ({ user }: { user: User }) => {
     const initialStocks = await searchStocks();
@@ -19,6 +20,7 @@ const Header = async ({ user }: { user: User }) => {
 
                 <UserDropdown user={user} initialStocks={initialStocks} />
             </div>
+            <MarketNewsBar />
         </header>
     )
 }

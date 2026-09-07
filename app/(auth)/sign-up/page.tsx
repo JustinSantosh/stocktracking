@@ -7,9 +7,10 @@ import SelectField from "@/components/forms/SelectField";
 import {INVESTMENT_GOALS, PREFERRED_INDUSTRIES, RISK_TOLERANCE_OPTIONS} from "@/lib/constants";
 import {CountrySelectField} from "@/components/forms/CountrySelectField";
 import FooterLink from "@/components/forms/FooterLink";
-import {signUpWithEmail} from "@/lib/actions/auth.actions";
+import {sendSignUpEvent} from "@/lib/actions/auth.actions";
 import {useRouter} from "next/navigation";
 import {toast} from "sonner";
+import {authClient} from "@/lib/auth-client";
 
 const SignUp = () => {
     const router = useRouter()
@@ -33,8 +34,22 @@ const SignUp = () => {
 
     const onSubmit = async (data: SignUpFormData) => {
         try {
-            const result = await signUpWithEmail(data);
-            if(result.success) router.push('/');
+            const result = await authClient.signUp.email({
+                email: data.email,
+                password: data.password,
+                name: data.fullName,
+            });
+
+            if(result.error) {
+                toast.error('Sign up failed', {
+                    description: result.error.message || 'Failed to create an account.'
+                });
+                return;
+            }
+
+            router.push('/');
+            router.refresh();
+            void sendSignUpEvent(data);
         } catch (e) {
             console.error(e);
             toast.error('Sign up failed', {
@@ -43,18 +58,30 @@ const SignUp = () => {
         }
     }
 
+    const onInvalid = () => {
+        toast.error('Check the form', {
+            description: 'Fix the highlighted fields and try again.',
+        });
+    }
+
     return (
         <>
             <h1 className="form-title">Sign Up & Personalize</h1>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-5">
                 <InputField
                     name="fullName"
                     label="Full Name"
                     placeholder="John Doe"
                     register={register}
                     error={errors.fullName}
-                    validation={{ required: 'Full name is required', minLength: 2 }}
+                    validation={{
+                        required: 'Full name is required',
+                        minLength: {
+                            value: 2,
+                            message: 'Full name must be at least 2 characters',
+                        },
+                    }}
                 />
 
                 <InputField
@@ -63,7 +90,13 @@ const SignUp = () => {
                     placeholder="contact@jsmastery.com"
                     register={register}
                     error={errors.email}
-                    validation={{ required: 'Email name is required', pattern: /^\w+@\w+\.\w+$/, message: 'Email address is required' }}
+                    validation={{
+                        required: 'Email is required',
+                        pattern: {
+                            value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                            message: 'Enter a valid email address',
+                        },
+                    }}
                 />
 
                 <InputField
@@ -73,7 +106,13 @@ const SignUp = () => {
                     type="password"
                     register={register}
                     error={errors.password}
-                    validation={{ required: 'Password is required', minLength: 8 }}
+                    validation={{
+                        required: 'Password is required',
+                        minLength: {
+                            value: 8,
+                            message: 'Password must be at least 8 characters',
+                        },
+                    }}
                 />
 
                 <CountrySelectField

@@ -102,6 +102,45 @@ declare global {
         result: FinnhubSearchResult[];
     };
 
+    type AlphaVantageSymbolMatch = {
+        '1. symbol': string;
+        '2. name': string;
+        '3. type': string;
+        '4. region': string;
+        '5. marketOpen': string;
+        '6. marketClose': string;
+        '7. timezone': string;
+        '8. currency': string;
+        '9. matchScore': string;
+    };
+
+    type AlphaVantageSearchResponse = {
+        bestMatches?: AlphaVantageSymbolMatch[];
+        Note?: string;
+        Information?: string;
+        Error?: string;
+    };
+
+    type AlphaVantageNewsArticle = {
+        title?: string;
+        summary?: string;
+        url?: string;
+        time_published?: string;
+        source?: string;
+        banner_image?: string;
+        overall_sentiment_label?: string;
+        ticker_sentiment?: Array<{
+            ticker?: string;
+        }>;
+    };
+
+    type AlphaVantageNewsResponse = {
+        feed?: AlphaVantageNewsArticle[];
+        Note?: string;
+        Information?: string;
+        Error?: string;
+    };
+
     type StockDetailsPageProps = {
         params: Promise<{
             symbol: string;

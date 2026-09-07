@@ -21,6 +21,40 @@ async function getCurrentUserId(): Promise<string | null> {
   return (user?.id as string) || String(user?._id || '') || null;
 }
 
+export async function getCurrentWatchlistSymbols(): Promise<string[]> {
+  const userId = await getCurrentUserId();
+  if (!userId) return [];
+
+  try {
+    const items = await Watchlist.find({ userId }, { symbol: 1 }).lean();
+    return items.map((item) => String(item.symbol).toUpperCase());
+  } catch (err) {
+    console.error('getCurrentWatchlistSymbols error:', err);
+    return [];
+  }
+}
+
+export async function getCurrentWatchlistItems(): Promise<StockWithData[]> {
+  const userId = await getCurrentUserId();
+  if (!userId) return [];
+
+  try {
+    const items = await Watchlist.find({ userId })
+      .sort({ addedAt: -1 })
+      .lean<Array<{ userId: string; symbol: string; company: string; addedAt: Date }>>();
+
+    return items.map((item) => ({
+      userId: item.userId,
+      symbol: item.symbol,
+      company: item.company,
+      addedAt: item.addedAt,
+    }));
+  } catch (err) {
+    console.error('getCurrentWatchlistItems error:', err);
+    return [];
+  }
+}
+
 export async function getWatchlistSymbolsByEmail(email: string): Promise<string[]> {
   if (!email) return [];
 
@@ -71,6 +105,7 @@ export async function addToWatchlist(symbol: string, company: string) {
   );
 
   revalidatePath('/');
+  revalidatePath('/watchlist');
   revalidatePath(`/stocks/${symbol.toUpperCase()}`);
   return { success: true };
 }
@@ -82,6 +117,7 @@ export async function removeFromWatchlist(symbol: string) {
   await Watchlist.deleteOne({ userId, symbol: symbol.toUpperCase() });
 
   revalidatePath('/');
+  revalidatePath('/watchlist');
   revalidatePath(`/stocks/${symbol.toUpperCase()}`);
   return { success: true };
 }

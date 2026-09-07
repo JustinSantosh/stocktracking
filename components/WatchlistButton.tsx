@@ -44,6 +44,7 @@ const WatchlistButton = ({
   if (type === "icon") {
     return (
       <button
+        type="button"
         title={added ? `Remove ${symbol} from watchlist` : `Add ${symbol} to watchlist`}
         aria-label={added ? `Remove ${symbol} from watchlist` : `Add ${symbol} to watchlist`}
         className={`watchlist-icon-btn ${added ? "watchlist-icon-added" : ""}`}
@@ -56,7 +57,7 @@ const WatchlistButton = ({
   }
 
   return (
-    <button className={`watchlist-btn ${added ? "watchlist-remove" : ""}`} onClick={handleClick} disabled={isPending}>
+    <button type="button" className={`watchlist-btn ${added ? "watchlist-remove" : ""}`} onClick={handleClick} disabled={isPending}>
       {showTrashIcon && added ? (
         <Trash2 className="w-5 h-5 mr-2" />
       ) : null}
